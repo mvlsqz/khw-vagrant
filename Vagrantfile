@@ -21,18 +21,16 @@ OS, NET_IFC = case VAGRANT_BOX
               when /ubuntu/
                 %w[ubuntu enp0s8]
               end
-PROVIDER = ENV['DEFAULT_PROVIDER'].nil? ? 'virtualbox' : ENV['DEFAULT_PROVIDER']
+PROVIDER = ENV['VAGRANT_DEFAULT_PROVIDER'].nil? ? 'virtualbox' : ENV['VAGRANT_DEFAULT_PROVIDER']
 
 Vagrant.configure('2') do |config|
-  config.vm.box = VAGRANT_BOX
   config.vm.box_check_update = false
-  config.vm.box_download_insecure = true
+  config.vm.box = VAGRANT_BOX
 
   # Provision controller nodes
   (1..NUM_MASTER_NODE).each do |i|
     config.vm.define "controller-#{i}" do |node|
       node.vm.provider PROVIDER do |vb|
-        vb.name = "kubernetes-ha-master-#{i}"
         vb.memory = 2048
         vb.cpus = 2
       end
@@ -42,20 +40,25 @@ Vagrant.configure('2') do |config|
       node.vm.provision 'setup-hosts', type: 'shell', path: 'provision/vagrant/setup-hosts.sh' do |s|
         s.args = [NET_IFC]
       end
-
-      node.vm.provision 'file', source: './provision/cert_verify.sh', destination: '$HOME/'
+      node.vm.provision 'setup-kubectl', type: 'shell', path: 'provision/install-kubectl.sh' do |s|
+        s.args = [OS]
+      end
+     node.vm.provision 'file', source: './provision/cert_verify.sh', destination: '$HOME/'
     end
   end
 
   # Provision Load Balancer Node
   config.vm.define 'loadbalancer' do |node|
     node.vm.provider PROVIDER do |vb|
-      vb.name = 'kubernetes-ha-lb'
       vb.memory = 512
       vb.cpus = 1
     end
     node.vm.hostname = 'loadbalancer'
     node.vm.network :private_network, ip: "#{IP_NW}#{LB_IP_START}"
+
+    node.vm.provision 'setup-kubectl', type: 'shell', path: 'provision/install-kubectl.sh' do |s|
+      s.args = [OS]
+    end
 
     node.vm.provision 'setup-hosts', type: 'shell', path: 'provision/vagrant/setup-hosts.sh' do |s|
       s.args = [NET_IFC]
@@ -66,7 +69,6 @@ Vagrant.configure('2') do |config|
   (1..NUM_WORKER_NODE).each do |i|
     config.vm.define "worker-#{i}" do |node|
       node.vm.provider PROVIDER do |vb|
-        vb.name = "kubernetes-ha-worker-#{i}"
         vb.memory = 512
         vb.cpus = 1
       end
@@ -76,11 +78,12 @@ Vagrant.configure('2') do |config|
       node.vm.provision 'setup-hosts', type: 'shell', path: 'provision/vagrant/setup-hosts.sh' do |s|
         s.args = [NET_IFC]
       end
-
-      node.vm.provision 'install-docker', type: 'shell', path: 'provision/install-docker-2.sh' do |s|
+      node.vm.provision 'setup-kubectl', type: 'shell', path: 'provision/install-kubectl.sh' do |s|
         s.args = [OS]
       end
-      node.vm.provision 'allow-bridge-nf-traffic', type: 'shell', path: 'provision/allow-bridge-nf-traffic.sh'
+      node.vm.provision 'allow-bridge-nf-traffic', type: 'shell', path: 'provision/allow-bridge-nf-traffic.sh' do |s|
+        s.args = [OS]
+      end
       node.vm.provision 'file', source: './provision/cert_verify.sh', destination: '$HOME/'
     end
   end
