@@ -1,7 +1,17 @@
 ## Configurando los nodos workers
 ```bash
 sudo yum install -y wget socat conntrack ipset
+
+modprobe br_netfilter
+cat > /etc/sysctl.d/k8s.conf <<EOF
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+EOF
+
+sysctl --system
 sudo swapoff -a
+
+[[ -d /usr/lib/systemd/system/ ]] && SYSTEMD_LIB=/usr/lib/systemd/system || SYSTEMD_LIB=/etc/systemd/system
 ```
 
 ## Descargar los binarios necesarios
@@ -25,7 +35,6 @@ sudo mkdir -p \
   /var/lib/kube-proxy \
   /var/lib/kubernetes \
   /var/run/kubernetes 
-
 
 {
   mkdir containerd
@@ -94,7 +103,7 @@ EOF
 
 ## Unidad systemd para containerd
 ```bash
-cat <<EOF | sudo tee /usr/lib/systemd/system/containerd.service
+cat <<EOF | sudo tee ${SYSTEMD_LIB}/containerd.service
 [Unit]
 Description=containerd container runtime
 Documentation=https://containerd.io
@@ -152,7 +161,7 @@ EOF
 ```
 
 ```bash
-cat <<EOF | sudo tee /usr/lib/systemd/system/kubelet.service
+cat <<EOF | sudo tee ${SYSTEMD_LIB}/kubelet.service
 [Unit]
 Description=Kubernetes Kubelet
 Documentation=https://github.com/kubernetes/kubernetes
@@ -200,14 +209,15 @@ EOF
 Configuramos la unidad de systemd para kube-proxy
 
 ```bash
-cat <<EOF | sudo tee /usr/lib/systemd/system/kube-proxy.service
+cat <<EOF | sudo tee ${SYSTEMD_LIB}/kube-proxy.service
 [Unit]
 Description=Kubernetes Kube Proxy
 Documentation=https://github.com/kubernetes/kubernetes
 
 [Service]
 ExecStart=/usr/local/bin/kube-proxy \\
-  --config=/var/lib/kube-proxy/kube-proxy-config.yaml
+  --config=/var/lib/kube-proxy/kube-proxy-config.yaml \\
+  --masquerade-all
 Restart=on-failure
 RestartSec=5
 

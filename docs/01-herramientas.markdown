@@ -6,3 +6,14 @@ curl -L -o cfssl https://github.com/cloudflare/cfssl/releases/download/v1.6.1/cf
 chmod u+x cfssl cfssljson
 sudo mv cfssl cfssljson /usr/local/bin
 ```
+
+# Pre configuraciones
+```bash
+modprobe br_netfilter
+cat > /etc/sysctl.d/k8s.conf <<EOF
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+EOF
+
+sysctl --system
+```

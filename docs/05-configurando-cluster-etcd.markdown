@@ -35,11 +35,12 @@ INTERNAL_IP=$(ip addr show eth1 | grep "inet " | awk '{print $2}' | cut -d / -f 
 Configuramos el nombre del nodo ETCD, este debe ser unico para poder configurar un cluster en el futuro
 ```bash
 ETCD_NAME=$(hostname -s)
+[[ -d /usr/lib/systemd/system/ ]] && SYSTEMD_LIB=/usr/lib/systemd/system || SYSTEMD_LIB=/etc/systemd/system
 ```
 
 Creamos la unidad de systemd para manejar el cluster etcd
 ```bash
-cat <<EOF | sudo tee /usr/lib/systemd/system/etcd.service
+cat <<EOF | sudo tee ${SYSTEMD_LIB}/etcd.service
 [Unit]
 Description=etcd
 Documentation=https://github.com/coreos

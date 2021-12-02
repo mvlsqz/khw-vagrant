@@ -15,11 +15,11 @@ NODE_IP_START = 20
 LB_IP_START = 30
 VAGRANT_BOX = ENV['BOX'].nil? ? 'ubuntu/bionic64' : ENV['BOX']
 
-OS, NET_IFC = case VAGRANT_BOX
+OS = case VAGRANT_BOX
               when /centos/
-                %w[centos eth0]
+                'centos'
               when /ubuntu/
-                %w[ubuntu enp0s8]
+                'ubuntu'
               end
 PROVIDER = ENV['VAGRANT_DEFAULT_PROVIDER'].nil? ? 'virtualbox' : ENV['VAGRANT_DEFAULT_PROVIDER']
 
@@ -30,6 +30,7 @@ Vagrant.configure('2') do |config|
   # Provision controller nodes
   (1..NUM_MASTER_NODE).each do |i|
     config.vm.define "controller-#{i}" do |node|
+      node.vm.network :forwarded_port, guest: 6443, host: 6443
       node.vm.provider PROVIDER do |vb|
         vb.memory = 2048
         vb.cpus = 2
@@ -37,13 +38,32 @@ Vagrant.configure('2') do |config|
       node.vm.hostname = "controller-#{i}"
       node.vm.network :private_network, ip: "#{IP_NW}#{MASTER_IP_START + i}"
 
-      node.vm.provision 'setup-hosts', type: 'shell', path: 'provision/vagrant/setup-hosts.sh' do |s|
-        s.args = [NET_IFC]
+      node.vm.provision 'setup-hosts',
+        type: 'shell',
+        path: 'provision/setup-hosts.sh' do |s|
+          s.args = [IP_NW]
+        end
+
+      node.vm.provision 'allow-bridge-nf-traffic', 
+        type: 'shell', 
+        path: 'provision/allow-bridge-nf-traffic.sh'
+
+      case OS
+      when 'ubuntu'
+        node.vm.provision 'setup-repositories',
+          type: 'shell',
+          path: 'provision/apt-repos.sh'
+      when 'centos'
+        node.vm.provision 'setup-repositories', 
+          type: 'shell', 
+          path: 'provision/yum-repos.sh'
       end
-      node.vm.provision 'setup-kubectl', type: 'shell', path: 'provision/install-kubectl.sh' do |s|
-        s.args = [OS]
-      end
-     node.vm.provision 'file', source: './provision/cert_verify.sh', destination: '$HOME/'
+
+      node.vm.provision 'install-kube-tools', 
+        type: 'shell', 
+        path: 'provision/install-kube-tools.sh' do |s|
+          s.args = [OS]
+        end
     end
   end
 
@@ -56,12 +76,8 @@ Vagrant.configure('2') do |config|
     node.vm.hostname = 'loadbalancer'
     node.vm.network :private_network, ip: "#{IP_NW}#{LB_IP_START}"
 
-    node.vm.provision 'setup-kubectl', type: 'shell', path: 'provision/install-kubectl.sh' do |s|
+    node.vm.provision 'allow-bridge-nf-traffic', type: 'shell', path: 'provision/allow-bridge-nf-traffic.sh' do |s|
       s.args = [OS]
-    end
-
-    node.vm.provision 'setup-hosts', type: 'shell', path: 'provision/vagrant/setup-hosts.sh' do |s|
-      s.args = [NET_IFC]
     end
   end
 
@@ -69,22 +85,39 @@ Vagrant.configure('2') do |config|
   (1..NUM_WORKER_NODE).each do |i|
     config.vm.define "worker-#{i}" do |node|
       node.vm.provider PROVIDER do |vb|
-        vb.memory = 512
+        vb.memory = 1024
         vb.cpus = 1
       end
       node.vm.hostname = "worker-#{i}"
+      
       node.vm.network :private_network, ip: "#{IP_NW}#{NODE_IP_START + i}"
 
-      node.vm.provision 'setup-hosts', type: 'shell', path: 'provision/vagrant/setup-hosts.sh' do |s|
-        s.args = [NET_IFC]
+      node.vm.provision 'setup-hosts',
+        type: 'shell',
+        path: 'provision/setup-hosts.sh' do |s|
+          s.args = [IP_NW]
+        end
+
+      node.vm.provision 'allow-bridge-nf-traffic',
+        type: 'shell',
+        path: 'provision/allow-bridge-nf-traffic.sh'
+
+      case OS
+      when 'ubuntu'
+        node.vm.provision 'setup-repositories',
+          type: 'shell',
+          path: 'provision/apt-repos.sh'
+      when 'centos'
+        node.vm.provision 'setup-repositories',
+          type: 'shell',
+          path: 'provision/yum-repos.sh'
       end
-      node.vm.provision 'setup-kubectl', type: 'shell', path: 'provision/install-kubectl.sh' do |s|
-        s.args = [OS]
-      end
-      node.vm.provision 'allow-bridge-nf-traffic', type: 'shell', path: 'provision/allow-bridge-nf-traffic.sh' do |s|
-        s.args = [OS]
-      end
-      node.vm.provision 'file', source: './provision/cert_verify.sh', destination: '$HOME/'
+
+      node.vm.provision 'install-kube-tools',
+        type: 'shell',
+        path: 'provision/install-kube-tools.sh' do |s|
+          s.args = [OS]
+        end
     end
   end
 end

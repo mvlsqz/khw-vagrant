@@ -21,6 +21,8 @@ done
   do
     sudo chmod +x /usr/local/bin/${binary}
   done
+
+  [[ -d /usr/lib/systemd/system/ ]] && SYSTEMD_LIB=/usr/lib/systemd/system || SYSTEMD_LIB=/etc/systemd/system
 }
 ```
 
@@ -44,7 +46,7 @@ KUBERNETES_PUBLIC_ADDRESS=192.168.5.11
 ### Creamos el servicio de systemd para API server
 
 ```bash
-cat <<EOF | sudo tee /usr/lib/systemd/system/kube-apiserver.service
+cat <<EOF | sudo tee ${SYSTEMD_LIB}/kube-apiserver.service
 [Unit]
 Description=Kubernetes API Server
 Documentation=https://github.com/kubernetes/kubernetes
@@ -96,7 +98,7 @@ sudo cp kubeconfigs/kube-controller-manager.kubeconfig /var/lib/kubernetes/
 
 ### creamos la unidad de systemd para kube-controller-manager
 ```bash
-cat <<EOF | sudo tee /usr/lib/systemd/system/kube-controller-manager.service
+cat <<EOF | sudo tee ${SYSTEMD_LIB}/kube-controller-manager.service
 [Unit]
 Description=Kubernetes Controller Manager
 Documentation=https://github.com/kubernetes/kubernetes
@@ -142,7 +144,7 @@ EOF
 
 Creamos la unidad de systemd
 ```bash
-cat <<EOF | sudo tee /usr/lib/systemd/system/kube-scheduler.service
+cat <<EOF | sudo tee ${SYSTEMD_LIB}/kube-scheduler.service
 [Unit]
 Description=Kubernetes Scheduler
 Documentation=https://github.com/kubernetes/kubernetes
