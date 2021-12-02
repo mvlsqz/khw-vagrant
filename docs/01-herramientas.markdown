@@ -9,11 +9,11 @@ sudo mv cfssl cfssljson /usr/local/bin
 
 # Pre configuraciones
 ```bash
-modprobe br_netfilter
-cat > /etc/sysctl.d/k8s.conf <<EOF
+sudo modprobe br_netfilter
+
+echo "
 net.bridge.bridge-nf-call-ip6tables = 1
-net.bridge.bridge-nf-call-iptables = 1
-EOF
+net.bridge.bridge-nf-call-iptables = 1" | sudo tee /etc/sysctl.d/k8s.conf
 
 sysctl --system
 ```
