@@ -2,13 +2,13 @@
 ```bash
 sudo yum install -y wget socat conntrack ipset
 
-modprobe br_netfilter
-cat > /etc/sysctl.d/k8s.conf <<EOF
+sudo modprobe br_netfilter
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
 EOF
 
-sysctl --system
+sudo sysctl --system
 sudo swapoff -a
 
 [[ -d /usr/lib/systemd/system/ ]] && SYSTEMD_LIB=/usr/lib/systemd/system || SYSTEMD_LIB=/etc/systemd/system
