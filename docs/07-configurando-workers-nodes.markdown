@@ -14,6 +14,9 @@ sudo swapoff -a
 sudo sed -i '/swap/d' /etc/fstab
 
 [[ -d /usr/lib/systemd/system/ ]] && SYSTEMD_LIB=/usr/lib/systemd/system || SYSTEMD_LIB=/etc/systemd/system
+
+HOST_NUMBER=$(hostname -s | awk -F'-' '{print $2}')
+POD_CIDR=10.200.${HOST_NUMBER}.0/24
 ```
 
 ## Descargar los binarios necesarios
@@ -50,7 +53,6 @@ sudo mkdir -p \
 }
 ```
 
-`POD_CIDR=10.200.0.0/16`
 
 ```bash
 cat <<EOF | sudo tee /etc/cni/net.d/10-bridge.conf
