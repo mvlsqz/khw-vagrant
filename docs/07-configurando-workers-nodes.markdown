@@ -1,6 +1,6 @@
 ## Configurando los nodos workers
 ```bash
-PKG_MGR=$( command -v rpm || command -v apt-get )
+PKG_MGR=$( command -v yum || command -v apt-get )
 sudo ${PKG_MGR} install -y wget socat conntrack ipset
 
 sudo modprobe br_netfilter
