@@ -1,6 +1,7 @@
 ## Configurando los nodos workers
 ```bash
-sudo yum install -y wget socat conntrack ipset
+PKG_MGR=$( command -v rpm || command -v apt-get )
+sudo ${PKG_MGR} install -y wget socat conntrack ipset
 
 sudo modprobe br_netfilter
 cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
@@ -10,6 +11,7 @@ EOF
 
 sudo sysctl --system
 sudo swapoff -a
+sudo sed -i '/swap/d' /etc/fstab
 
 [[ -d /usr/lib/systemd/system/ ]] && SYSTEMD_LIB=/usr/lib/systemd/system || SYSTEMD_LIB=/etc/systemd/system
 ```
@@ -153,6 +155,7 @@ authorization:
 clusterDomain: "cluster.local"
 clusterDNS:
   - "10.32.0.10"
+resolvConf: "/run/systemd/resolve/resolv.conf"
 podCIDR: "${POD_CIDR}"
 runtimeRequestTimeout: "15m"
 tlsCertFile: "/var/lib/kubelet/${HOSTNAME}.pem"

@@ -14,6 +14,7 @@ MASTER_IP_START = 10
 NODE_IP_START = 20
 LB_IP_START = 30
 VAGRANT_BOX = ENV['BOX'].nil? ? 'ubuntu/bionic64' : ENV['BOX']
+STORAGE_POOL = ENV['STORAGE_POOL'].nil? ? 'default' : ENV['STORAGE_POOL']
 
 OS = case VAGRANT_BOX
               when /centos/
@@ -32,6 +33,9 @@ Vagrant.configure('2') do |config|
     config.vm.define "controller-#{i}" do |node|
       node.vm.network :forwarded_port, guest: 6443, host: 6443
       node.vm.provider PROVIDER do |vb|
+        if PROVIDER == 'libvirt'
+          vb.storage_pool_name = STORAGE_POOL
+        end
         vb.memory = 2048
         vb.cpus = 2
       end
@@ -70,6 +74,9 @@ Vagrant.configure('2') do |config|
   # Provision Load Balancer Node
   config.vm.define 'loadbalancer' do |node|
     node.vm.provider PROVIDER do |vb|
+      if PROVIDER == 'libvirt'
+        vb.storage_pool_name = STORAGE_POOL
+      end
       vb.memory = 512
       vb.cpus = 1
     end
@@ -85,6 +92,9 @@ Vagrant.configure('2') do |config|
   (1..NUM_WORKER_NODE).each do |i|
     config.vm.define "worker-#{i}" do |node|
       node.vm.provider PROVIDER do |vb|
+        if PROVIDER == 'libvirt'
+          vb.storage_pool_name = STORAGE_POOL
+        end
         vb.memory = 1024
         vb.cpus = 1
       end
