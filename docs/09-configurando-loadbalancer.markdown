@@ -1,98 +1,98 @@
 ```bash
-  add-apt-repository -y ppa:vbernat/haproxy-2.4
-  apt update
-  apt install -y haproxy
-  setcap cap_net_bind_service=+ep /usr/sbin/haproxy
-  wget https://github.com/haproxytech/kubernetes-ingress/releases/download/v1.6.2/haproxy-ingress-controller_1.6.2_Linux_x86_64.tar.gz 1> /dev/null 2> /dev/null
-  mkdir ingress-controller
-  tar -xzvf haproxy-ingress-controller_1.6.2_Linux_x86_64.tar.gz -C ./ingress-controller
-  cp ./ingress-controller/haproxy-ingress-controller /usr/local/bin/
+add-apt-repository -y ppa:vbernat/haproxy-2.4
+apt update
+apt install -y haproxy
+setcap cap_net_bind_service=+ep /usr/sbin/haproxy
+wget https://github.com/haproxytech/kubernetes-ingress/releases/download/v1.6.2/haproxy-ingress-controller_1.6.2_Linux_x86_64.tar.gz 1> /dev/null 2> /dev/null
+mkdir ingress-controller
+tar -xzvf haproxy-ingress-controller_1.6.2_Linux_x86_64.tar.gz -C ./ingress-controller
+cp ./ingress-controller/haproxy-ingress-controller /usr/local/bin/
 
-  PKG_MGR=$( command -v yum || command -v apt-get )
+PKG_MGR=$( command -v yum || command -v apt-get )
 
-  [[ -d /usr/lib/systemd/system/ ]] && SYSTEMD_LIB=/usr/lib/systemd/system || SYSTEMD_LIB=/etc/systemd/system 
+[[ -d /usr/lib/systemd/system/ ]] && SYSTEMD_LIB=/usr/lib/systemd/system || SYSTEMD_LIB=/etc/systemd/system 
 
-  mkdir /etc/haproxy/ingress-controller
+mkdir /etc/haproxy/ingress-controller
 
-  cat <<EOF | sudo tee /etc/haproxy/ingress-controller/before.sh
-  #!/bin/bash -xe
-  /bin/mkdir -p /tmp/haproxy-ingress/etc/
-  /usr/bin/wget https://raw.githubusercontent.com/haproxytech/kubernetes-ingress/master/fs/usr/local/etc/haproxy/haproxy.cfg -P /tmp/haproxy-ingress/etc/
-  EOF
+cat <<EOF | sudo tee /etc/haproxy/ingress-controller/before.sh
+#!/bin/bash -xe
+/bin/mkdir -p /tmp/haproxy-ingress/etc/
+/usr/bin/wget https://raw.githubusercontent.com/haproxytech/kubernetes-ingress/master/fs/usr/local/etc/haproxy/haproxy.cfg -P /tmp/haproxy-ingress/etc/
+EOF
 
-  chmod -x /etc/haproxy/ingress-controller/before.sh 
+chmod -x /etc/haproxy/ingress-controller/before.sh 
 
-  cat <<EOF | sudo tee ${SYSTEMD_LIB}/haproxy-ingress.service  
-  [Unit]
-  Description="HAProxy Kubernetes Ingress Controller"
-  Documentation=https://www.haproxy.com/
-  Requires=network-online.target
-  After=network-online.target
+cat <<EOF | sudo tee ${SYSTEMD_LIB}/haproxy-ingress.service  
+[Unit]
+Description="HAProxy Kubernetes Ingress Controller"
+Documentation=https://www.haproxy.com/
+Requires=network-online.target
+After=network-online.target
 
-  [Service]
-  Type=simple
-  User=root
-  Group=root
-  ExecStartPre=/etc/haproxy/ingress-controller/before.sh
-  ExecStart=/usr/local/bin/haproxy-ingress-controller --external --configmap=default/haproxy-kubernetes-ingress --program=/usr/sbin/haproxy --disable-ipv6 --ipv4-bind-address=0.0.0.0 --http-bind-port=80 &
-  ExecReload=/bin/kill --signal HUP $MAINPID
-  KillMode=process
-  KillSignal=SIGTERM
-  Restart=on-failure
-  LimitNOFILE=65536
-  [Install]
-  WantedBy=multi-user.target
-  EOF
+[Service]
+Type=simple
+User=root
+Group=root
+ExecStartPre=/etc/haproxy/ingress-controller/before.sh
+ExecStart=/usr/local/bin/haproxy-ingress-controller --external --configmap=default/haproxy-kubernetes-ingress --program=/usr/sbin/haproxy --disable-ipv6 --ipv4-bind-address=0.0.0.0 --http-bind-port=80 &
+ExecReload=/bin/kill --signal HUP $MAINPID
+KillMode=process
+KillSignal=SIGTERM
+Restart=on-failure
+LimitNOFILE=65536
+[Install]
+WantedBy=multi-user.target
+EOF
 
-  cat /etc/systemd/system/haproxy-ingress.service 
+cat /etc/systemd/system/haproxy-ingress.service 
 
-  apt install traceroute
+apt install traceroute
 
-  mkdir -p ~/.kube
-  cp -a /home/vagrant/admin.kubeconfig ~/.kube/config
+mkdir -p ~/.kube
+cp -a /home/vagrant/admin.kubeconfig ~/.kube/config
 
-  chown root:root -R ~/.kube/config 
+chown root:root -R ~/.kube/config 
 
-  add-apt-repository -y ppa:cz.nic-labs/bird
-  apt update
-  apt install bird
+add-apt-repository -y ppa:cz.nic-labs/bird
+apt update
+apt install bird
 
-  cat <<EOF | sudo tee /etc/bird/bird.conf 
-  router id 192.168.5.30;
-  log syslog all;
-  # worker-1
-  protocol bgp worker1 {
-      local 192.168.5.30 as 64512;
-      neighbor 192.168.5.21 as 64512;
-      direct;
-      import filter {
-          if ( net ~ [ 10.200.0.0/16{16,26} ] ) then accept;
-      }; 
-      export none;
-  }
-  # worker-2
-  protocol bgp worker2 {
-      local 192.168.5.30 as 64512;
-      neighbor 192.168.5.22 as 64512;
-      direct;
-      import filter {
-          if ( net ~ [ 10.200.0.0/16{16,26} ] ) then accept;
-      };
-      export none;
-  }
-  protocol kernel {
-      scan time 60;
-      export all;
-  }
-  protocol device {
-      scan time 60;
-  }
-  EOF
+cat <<EOF | sudo tee /etc/bird/bird.conf 
+router id 192.168.5.30;
+log syslog all;
+# worker-1
+protocol bgp worker1 {
+    local 192.168.5.30 as 64512;
+    neighbor 192.168.5.21 as 64512;
+    direct;
+    import filter {
+        if ( net ~ [ 10.200.0.0/16{16,26} ] ) then accept;
+    }; 
+    export none;
+}
+# worker-2
+protocol bgp worker2 {
+    local 192.168.5.30 as 64512;
+    neighbor 192.168.5.22 as 64512;
+    direct;
+    import filter {
+        if ( net ~ [ 10.200.0.0/16{16,26} ] ) then accept;
+    };
+    export none;
+}
+protocol kernel {
+    scan time 60;
+    export all;
+}
+protocol device {
+    scan time 60;
+}
+EOF
 
-  systemct enable --now bird
+systemct enable --now bird
 
-  journalctl -fu bird
+journalctl -fu bird
 
-  sudo birdc show protocols
-  sudo birdc show route protocol worker1
+sudo birdc show protocols
+sudo birdc show route protocol worker1
 ```
