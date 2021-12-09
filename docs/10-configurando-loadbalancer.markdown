@@ -35,7 +35,7 @@ cat <<EOF | sudo tee /etc/haproxy/ingress-controller/before.sh
 /usr/bin/wget https://raw.githubusercontent.com/haproxytech/kubernetes-ingress/master/fs/usr/local/etc/haproxy/haproxy.cfg -P /tmp/haproxy-ingress/etc/
 EOF
 
-chmod -x /etc/haproxy/ingress-controller/before.sh 
+chmod +x /etc/haproxy/ingress-controller/before.sh 
 
 cat <<EOF | sudo tee ${SYSTEMD_LIB}/haproxy-ingress.service  
 [Unit]
