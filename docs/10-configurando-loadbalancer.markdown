@@ -6,18 +6,18 @@ Vamos a utilizar haproxy ingress controller como balanceador de carga/ingress co
 
 ```bash
 # Instalamos haproxy
-add-apt-repository -y ppa:vbernat/haproxy-2.4
-apt update
-apt install -y haproxy
+sudo add-apt-repository -y ppa:vbernat/haproxy-2.4
+sudo apt update
+sudo apt install -y haproxy
 
 # Configuramos para que pueda capturar puertos privilegiados
-setcap cap_net_bind_service=+ep /usr/sbin/haproxy
+sudo setcap cap_net_bind_service=+ep /usr/sbin/haproxy
 
 # Descargamos e instalamos el ingress controller
 wget https://github.com/haproxytech/kubernetes-ingress/releases/download/v1.6.2/haproxy-ingress-controller_1.6.2_Linux_x86_64.tar.gz 1> /dev/null 2> /dev/null
 mkdir ingress-controller
 tar -xzvf haproxy-ingress-controller_1.6.2_Linux_x86_64.tar.gz -C ./ingress-controller
-cp ./ingress-controller/haproxy-ingress-controller /usr/local/bin/
+sudo cp ./ingress-controller/haproxy-ingress-controller /usr/local/bin/
 ```
 
 ## Configuramos el servicio
@@ -74,9 +74,9 @@ chown root:root -R ~/.kube/config
 Para implementar la comunicación BGP vamos a utilizar BIRD en el el nodo loadbalancer y establecer las rutas para que el ingress controller pueda llegar a los pods en los workers
 
 ```bash
-add-apt-repository -y ppa:cz.nic-labs/bird
-apt update
-apt install bird
+sudo add-apt-repository -y ppa:cz.nic-labs/bird
+sudo apt update
+sudo apt install bird
 
 # configuramos bird
 cat <<EOF | sudo tee /etc/bird/bird.conf 
@@ -111,7 +111,7 @@ protocol device {
 }
 EOF
 
-systemct enable --now bird
+sudo systemct enable --now bird
 
 sudo birdc show protocols
 sudo birdc show route protocol worker1
