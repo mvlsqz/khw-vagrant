@@ -118,7 +118,7 @@ sudo birdc show route protocol worker1
 sudo birdc show route protocol worker3
 ```
 
-# ** ejecutar en controller-1**
+# **ejecutar en controller-1**
 Para que nuestro ingress controller funcione de manera adecuada, debemos el configmap por default definido en la configuración de la unidad de systemd
 
 Este configmap es utilizado por haproxy para configurar el ingress controller
