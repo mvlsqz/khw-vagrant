@@ -1,4 +1,5 @@
 # Configurando Control Plane
+El control plane es el nodo que corre todos los servicios core del cluster, este nodo es el corazon de todo el cluster
 
 ## Creamos el directorio base
 
@@ -37,10 +38,9 @@ done
 }
 ```
 
-La interfaz de red interna se usara para contactar a los miembros del cluster
+La interfaz de red interna se usara para  que los componentes y los nodos puedan contactar al control plane.
 ```bash
 INTERNAL_IP=$(ip addr show eth1 | grep "inet " | awk '{print $2}' | cut -d / -f 1)
-KUBERNETES_PUBLIC_ADDRESS=192.168.5.11
 ```
 
 ### Creamos el servicio de systemd para API server
@@ -76,7 +76,7 @@ ExecStart=/usr/local/bin/kube-apiserver \\
   --runtime-config='api/all=true' \\
   --service-account-key-file=/var/lib/kubernetes/service-account.pem \\
   --service-account-signing-key-file=/var/lib/kubernetes/service-account-key.pem \\
-  --service-account-issuer=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 \\
+  --service-account-issuer=https://${INTERNAL_IP}:6443 \\
   --service-cluster-ip-range=10.32.0.0/24 \\
   --service-node-port-range=30000-32767 \\
   --tls-cert-file=/var/lib/kubernetes/kubernetes.pem \\
@@ -177,7 +177,9 @@ kubectl get componentstatuses --kubeconfig kubeconfigs/admin.kubeconfig
 
 ```
 
-## Configuracón RBAC para los clientes kubelet
+# Preparamos el control plane para aceptar a los nodos workers
+
+## Configuracón RBAC para los clientes kubelet (worker)
 
 ```bash
 cat <<EOF | kubectl apply --kubeconfig kubeconfigs/admin.kubeconfig -f -
@@ -203,7 +205,7 @@ rules:
 EOF
 ```
 
-Agregamos el rol `system:kube-apiserver-to-kubelet` al usuario kubernetes el cual sera usado por kubelet
+Asignamos el rol `system:kube-apiserver-to-kubelet` creado previamente al usuario kubernetes el cual sera usado por kubelet
 
 ```bash
 cat <<EOF | kubectl apply --kubeconfig kubeconfigs/admin.kubeconfig -f -
@@ -226,3 +228,5 @@ EOF
 
 ## Verificamos de nuevo el cluster
 ` curl --cacert ca/ca.pem https://192.168.5.11:6443/version `
+
+**Siguiente** [Workers](07-configurando-workers-nodes.markdown)

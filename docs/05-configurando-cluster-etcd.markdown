@@ -1,4 +1,5 @@
 # Configurando ETCD
+Kubernetes guarda el estado de todos sus componentes en una base de datos, esta base de datos es ETCD
 
 ### Instalación
 ```bash
@@ -6,7 +7,6 @@ ETCD_VER=v3.5.1
 
 # choose either URL
 GOOGLE_URL=https://storage.googleapis.com/etcd
-GITHUB_URL=https://github.com/etcd-io/etcd/releases/download
 DOWNLOAD_URL=${GOOGLE_URL}
 
 rm -f /tmp/etcd-${ETCD_VER}-linux-amd64.tar.gz
@@ -18,16 +18,20 @@ rm -f /tmp/etcd-${ETCD_VER}-linux-amd64.tar.gz
 
 sudo mv /tmp/etcd-download-bin/etcd* /usr/local/bin/
 ```
+
 ### Configurando ETCD
 ```bash
 {
   sudo mkdir -p /etc/etcd /var/lib/etcd
   sudo chmod 700 /var/lib/etcd
+
+  # usamos los certificados generados en el paso 02
   sudo cp ca/ca.pem kube-apiserver/kubernetes.pem kube-apiserver/kubernetes-key.pem /etc/etcd
 }
 ```
 
-La ip interna se utilizara para servir las peticiones
+ETCD va a escuchar en la ip primaria del servidor controller-1
+
 ```bash
 INTERNAL_IP=$(ip addr show eth1 | grep "inet " | awk '{print $2}' | cut -d / -f 1)
 ```
@@ -91,3 +95,5 @@ sudo ETCDCTL_API=3 /usr/local/bin/etcdctl member list \
   --key=/etc/etcd/kubernetes-key.pem
 
 ```
+
+**Siguiente** [Control Plane](06-configurando-control-plane.markdown)

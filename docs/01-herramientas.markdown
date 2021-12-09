@@ -1,3 +1,4 @@
+# **controller-1**
 # Herramientas
 
 ```bash
@@ -17,3 +18,5 @@ net.bridge.bridge-nf-call-iptables = 1" | sudo tee /etc/sysctl.d/k8s.conf
 
 sudo sysctl --system
 ```
+
+**Siguiente** [Certificados](02-certificates.markdown)

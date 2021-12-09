@@ -1,4 +1,9 @@
+# **controller-1**
+Para poder configurar el cluster necesitamos generar un [PKI](https://en.wikipedia.org/wiki/Public_key_infrastructure) usando un set de herramientas de CloudFare, y con esto configurar un CA para generar los certificados TLS para los siguientes componentes, etcd, kube-apiserver, kube-controller-manager, kube-scheduler, kubelets, y kube-proxy.
+
 # CA, TLS
+
+Generamos el archivo de configuración para el CA, el certificado y la llave privada.
 ```bash
 {
 
@@ -291,3 +296,5 @@ cfssl gencert \
 
 mv service-account*.pem service-account
 ```
+
+**Siguiente** [kubeconfigs](03-configs-para-autenticacion.markdown)

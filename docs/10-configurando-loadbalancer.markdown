@@ -1,13 +1,28 @@
+# Configurando Load Balancer
+Vamos a utilizar haproxy ingress controller como balanceador de carga/ingress controller, para el uso de haproxy podemos consultar la [documentación](https://haproxy-ingress.github.io/) y [ejemplos](https://haproxy-ingress.github.io/)
+
+
+# Instalación y configuración
+
 ```bash
+# Instalamos haproxy
 add-apt-repository -y ppa:vbernat/haproxy-2.4
 apt update
 apt install -y haproxy
+
+# Configuramos para que pueda capturar puertos privilegiados
 setcap cap_net_bind_service=+ep /usr/sbin/haproxy
+
+# Descargamos e instalamos el ingress controller
 wget https://github.com/haproxytech/kubernetes-ingress/releases/download/v1.6.2/haproxy-ingress-controller_1.6.2_Linux_x86_64.tar.gz 1> /dev/null 2> /dev/null
 mkdir ingress-controller
 tar -xzvf haproxy-ingress-controller_1.6.2_Linux_x86_64.tar.gz -C ./ingress-controller
 cp ./ingress-controller/haproxy-ingress-controller /usr/local/bin/
+```
 
+## Configuramos el servicio
+
+```
 PKG_MGR=$( command -v yum || command -v apt-get )
 
 [[ -d /usr/lib/systemd/system/ ]] && SYSTEMD_LIB=/usr/lib/systemd/system || SYSTEMD_LIB=/etc/systemd/system 
@@ -44,19 +59,26 @@ LimitNOFILE=65536
 WantedBy=multi-user.target
 EOF
 
-cat /etc/systemd/system/haproxy-ingress.service 
+```
 
-apt install traceroute
-
+### Comunicación con el cluster
+Para lograr comunicarnos con el cluster de manera nativa, copiamos el archivo kubeconfig del node controler al nodo load balancer y ejecutamos los comandos siguientes:
+```bash
 mkdir -p ~/.kube
 cp -a /home/vagrant/admin.kubeconfig ~/.kube/config
 
 chown root:root -R ~/.kube/config 
+```
 
+# Implementamos la comunicación BGP con los nodos del cluster
+Para implementar la comunicación BGP vamos a utilizar BIRD en el el nodo loadbalancer y establecer las rutas para que el ingress controller pueda llegar a los pods en los workers
+
+```bash
 add-apt-repository -y ppa:cz.nic-labs/bird
 apt update
 apt install bird
 
+# configuramos bird
 cat <<EOF | sudo tee /etc/bird/bird.conf 
 router id 192.168.5.30;
 log syslog all;
@@ -91,8 +113,19 @@ EOF
 
 systemct enable --now bird
 
-journalctl -fu bird
-
 sudo birdc show protocols
 sudo birdc show route protocol worker1
+sudo birdc show route protocol worker3
 ```
+
+# ** ejecutar en controller-1**
+Para que nuestro ingress controller funcione de manera adecuada, debemos el configmap por default definido en la configuración de la unidad de systemd
+
+Este configmap es utilizado por haproxy para configurar el ingress controller
+
+```bash
+kubectl create configmaps haproxy-kubernetes-ingress
+
+```
+
+En este punto nuestro load balancer ya deberia ser capaz de ver los pods y servicios que estan corriendo en el cluster, se podria probar alguno de los ejemplos en la documentación de haproxy para validar la funcionalidad

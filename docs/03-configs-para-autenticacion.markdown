@@ -2,13 +2,20 @@
 
 ## IP publica de kubernetes
 
-En este implementación vamos a utilizar un nodo externo como ip publica
+Nuestra implementación tiene unicamente un nodo controller, la IP de este nodo sera la IP publica por la que los clientes y servicios van a contactar al nodo controller del cluster, para implementaciones con mas de un nodo controller se recomienda utilizar un balancer externo y configurarlo como el `KUBERNETES_PUBLIC_ADDRESS`
+
+## Kubeconfigs
+Los kubeconfigs son archivos en formato yaml que se usan como metodo de autenticación para realizar operaciones administrativas en el cluster, de la misma forma los componentes del cluster de kubernetes utilizan este metodo tambien para hablar con la API de kuberentes (kube-apiserver).
+
 ```bash
 KUBERNETES_PUBLIC_ADDRESS=192.168.5.11
-```
-` mkdir kubeconfigs`
 
-### Kubeconfig para los clientes kubelet
+# una carpeta para guardar los kubeconfigs que vamos a generar
+mkdir kubeconfigs
+
+```
+
+### Kubeconfig para los clientes kubelet (worker)
 
 ```bash
 for instance in worker-1 worker-2 worker-3; do
@@ -66,7 +73,7 @@ done
   kubectl config set-cluster kubernetes-cluster \
     --certificate-authority=ca/ca.pem \
     --embed-certs=true \
-    --server=https://127.0.0.1:6443 \
+    --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 \
     --kubeconfig=kubeconfigs/kube-controller-manager.kubeconfig
 
   kubectl config set-credentials system:kube-controller-manager \
@@ -91,7 +98,7 @@ done
   kubectl config set-cluster kubernetes-cluster \
     --certificate-authority=ca/ca.pem \
     --embed-certs=true \
-    --server=https://127.0.0.1:6443 \
+    --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 \
     --kubeconfig=kubeconfigs/kube-scheduler.kubeconfig
 
   kubectl config set-credentials system:kube-scheduler \
@@ -115,7 +122,7 @@ done
   kubectl config set-cluster kubernetes-cluster \
     --certificate-authority=ca/ca.pem \
     --embed-certs=true \
-    --server=https://127.0.0.1:6443 \
+    --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 \
     --kubeconfig=kubeconfigs/admin.kubeconfig
 
   kubectl config set-credentials admin \
@@ -133,3 +140,5 @@ done
 }
 
 ```
+
+**Siguiente** [Encriptacion](04-enciptacion-de-data.markdown)

@@ -1,20 +1,32 @@
+## **workers**
+
 ## Configurando los nodos workers
+
+Es necesario copiar las carpetas `ca`, `kubeconfigs`, y `workers` generados en los pasos 2 y 3, podemos utilizar scp o sftp para transferir la información de forma segura.
+
+
+## Pre requisitos para poder correr los servicios
 ```bash
 PKG_MGR=$( command -v yum || command -v apt-get )
 sudo ${PKG_MGR} install -y wget socat conntrack ipset
 
 sudo modprobe br_netfilter
+
+# configuramos el comportamiento de la interfaz bridge
 cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
 EOF
 
+# aplicamos los cambios
 sudo sysctl --system
+# deshabilitamos swap
 sudo swapoff -a
 sudo sed -i '/swap/d' /etc/fstab
 
 [[ -d /usr/lib/systemd/system/ ]] && SYSTEMD_LIB=/usr/lib/systemd/system || SYSTEMD_LIB=/etc/systemd/system
 
+# Establecemos el rango de red que le vamos a asignar al los pods que van a correr en el nodo
 HOST_NUMBER=$(hostname -s | awk -F'-' '{print $2}')
 POD_CIDR=10.200.${HOST_NUMBER}.0/24
 ```
@@ -32,6 +44,7 @@ wget -q --show-progress --https-only --timestamping \
 ```
 
 ### Instalamos los binarios
+
 ```bash
 sudo mkdir -p \
   /etc/cni/net.d \
@@ -53,6 +66,7 @@ sudo mkdir -p \
 }
 ```
 
+## Configuramos la interfaz de red para nuestros PODs
 
 ```bash
 cat <<EOF | sudo tee /etc/cni/net.d/10-bridge.conf
@@ -89,6 +103,7 @@ EOF
 ```
 
 ## configuramos containerd
+Configuramos containerd como CRI el cual controlará todas las operaciones de los contenedores
 
 ```bash
 sudo mkdir -p /etc/containerd/
@@ -132,6 +147,8 @@ EOF
 ```
 
 ## Configuracion Kubelet
+Kubelet es el componente de kubernetes que se comunica con el control plane y realiza todas las operaciones que este le indique.
+
 ```bash
 sudo mv workers/${HOSTNAME}.pem \
    workers/${HOSTNAME}-key.pem /var/lib/kubelet/
@@ -193,6 +210,8 @@ EOF
 ```
 
 ## Configuracion de kube-proxy
+Kube-proxy es el componente que se encarga de la comunicaión de red entre contenedores
+
 ```bash
 sudo mv kubeconfigs/kube-proxy.kubeconfig \
   /var/lib/kube-proxy/kubeconfig
@@ -242,3 +261,5 @@ EOF
 }
 
 ```
+
+**Siguiente** [Network Plugin](08-instalando-network-plugin.markdown)
