@@ -64,6 +64,7 @@ EOF
 ### Comunicación con el cluster
 Para lograr comunicarnos con el cluster de manera nativa, copiamos el archivo kubeconfig del node controler al nodo load balancer y ejecutamos los comandos siguientes:
 ```bash
+sudo su -
 mkdir -p ~/.kube
 cp -a /home/vagrant/admin.kubeconfig ~/.kube/config
 
