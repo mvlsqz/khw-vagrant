@@ -136,3 +136,9 @@ kubectl create configmaps haproxy-kubernetes-ingress
 ```
 
 En este punto nuestro load balancer ya deberia ser capaz de ver los pods y servicios que estan corriendo en el cluster, se podria probar alguno de los ejemplos en la documentación de haproxy para validar la funcionalidad
+
+# Lecturas recomendadas
+[Ejemplos de ingress controller](https://haproxy-ingress.github.io/docs/examples)
+[Network CIDR](https://es.wikipedia.org/wiki/Classless_Inter-Domain_Routing)
+[BGP Protocol](https://es.wikipedia.org/wiki/Border_Gateway_Protocol)
+[HA ingress controller documentation)[https://www.haproxy.com/documentation/kubernetes/latest/configuration/configmap/]
