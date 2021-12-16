@@ -139,6 +139,9 @@ En este punto nuestro load balancer ya deberia ser capaz de ver los pods y servi
 
 # Lecturas recomendadas
 [Ejemplos de ingress controller](https://haproxy-ingress.github.io/docs/examples)
+
 [Network CIDR](https://es.wikipedia.org/wiki/Classless_Inter-Domain_Routing)
+
 [BGP Protocol](https://es.wikipedia.org/wiki/Border_Gateway_Protocol)
+
 [HA ingress controller documentation](https://www.haproxy.com/documentation/kubernetes/latest/configuration/configmap/)
