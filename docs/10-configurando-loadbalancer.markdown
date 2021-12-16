@@ -114,9 +114,15 @@ EOF
 
 sudo systemct enable --now bird
 
+apt install traceroute
+
 sudo birdc show protocols
 sudo birdc show route protocol worker1
-sudo birdc show route protocol worker3
+sudo birdc show route protocol worker2
+sudo route -n
+sudo traceroute IP_POD
+ping IP_POD
+
 ```
 
 # **ejecutar en controller-1**
