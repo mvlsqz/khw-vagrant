@@ -29,6 +29,20 @@ sudo sed -i '/swap/d' /etc/fstab
 # Establecemos el rango de red que le vamos a asignar al los pods que van a correr en el nodo
 HOST_NUMBER=$(hostname -s | awk -F'-' '{print $2}')
 POD_CIDR=10.200.${HOST_NUMBER}.0/24
+# Las ips de los pods en el worker-1 serian
+# podA 10.200.1.20
+# rango de ip para los pods en el worker-1 / 10.200.1.0 
+# 10.200.1.1 -> 10.200.1.254
+
+
+# Las ips de los pods en el worker-2 serian
+# podA 10.200.2.20
+# rango de ip para los pods en el worker-2
+# 10.200.2.1 -> 10.200.2.254
+
+# Las ips de los pods en el worker-3 serian
+# podA 10.200.3.20
+# 10.200.3.1 -> 10.200.3.254
 ```
 
 ## Descargar los binarios necesarios
